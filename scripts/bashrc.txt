@@ -1,0 +1,33 @@
+function gce-start(){
+    INSTANCE_NAME=$(gcloud compute instances list --filter="status=TERMINATED" --format="value(name)"|fzf)
+    if [ -n "${INSTANCE_NAME}" ]; then
+        ZONE=$(gcloud compute instances list --filter="name=${INSTANCE_NAME}" --format="value(zone)")
+        gcloud compute instances start ${INSTANCE_NAME} --zone=${ZONE}
+    else
+        echo Instance is not specified.
+    fi
+    gcloud compute instances list
+}
+
+function gce-stop(){
+    INSTANCE_NAME=$(gcloud compute instances list --filter="status=RUNNING" --format="value(name)"|fzf)
+    if [ -n "${INSTANCE_NAME}" ]; then
+        ZONE=$(gcloud compute instances list --filter="name=${INSTANCE_NAME}" --format="value(zone)")
+        gcloud compute instances stop ${INSTANCE_NAME} --zone=${ZONE}
+    else
+        echo Instance is not specified.
+    fi
+    gcloud compute instances list
+}
+
+function gce-ssh(){
+    INSTANCE_NAME=$(gcloud compute instances list --filter="status=RUNNING" --format="value(name)"|fzf)
+    if [ -n "${INSTANCE_NAME}" ]; then
+        ZONE=$(gcloud compute instances list --filter="name=${INSTANCE_NAME}" --format="value(zone)")
+        gcloud compute ssh --tunnel-through-iap ${INSTANCE_NAME} --zone=${ZONE}
+    else
+        echo Instance not specified.
+    fi
+}
+
+alias gce-list='gcloud compute instances list --format="table(name, resourcePolicies[0].basename(), zone, machineType, scheduling.preemptible, networkInterfaces[].accessConfigs[natIP], status)"'

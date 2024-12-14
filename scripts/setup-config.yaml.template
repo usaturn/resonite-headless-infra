@@ -1,0 +1,183 @@
+#cloud-config
+
+timezone: Asia/Tokyo
+locale: ja_JP.utf8
+
+bootcmd:
+  - mkdir -p /var/lib/resonite/
+  - useradd -s /bin/bash -d /home/%%{USER} -m %%{USER}
+
+write_files:
+- path: /etc/systemd/system/resonite-headless.service
+  permissions: 0644
+  owner: root
+  content: |
+    [Unit]
+    Description=Resonite Headless Server
+    After=network.service
+
+    [Service]
+    Type=forking
+    # Restart=always
+    WorkingDirectory=/home/%%{USER}
+    ExecStart=/bin/bash /var/lib/resonite/start-resonite-headless.bash
+    User=%%{USER}
+    Group=%%{USER}
+
+    [Install]
+    WantedBy=multi-user.target
+- path: /var/lib/resonite/start-resonite-headless.bash
+  permissions: 0644
+  owner: root
+  content: |
+    #!/bin/bash
+    export INSTANCE_NAME=$(curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/name 2>/dev/null)
+    export HEADLESS_CONFIG_SECRET=${INSTANCE_NAME}
+    export RESONITE_HEADLESS_DIR="/home/%%{USER}/.local/share/Steam/steamapps/common/Resonite/Headless"
+    export HEADLESS_CONFIG_FILE=${RESONITE_HEADLESS_DIR}/Config/Config.json
+    install -d -m 0755 -o %%{USER} -g %%{USER} ${RESONITE_HEADLESS_DIR}/Logs
+    install -d -m 0755 -o %%{USER} -g %%{USER} ${RESONITE_HEADLESS_DIR}/Config
+    gcloud secrets versions access latest --secret ${HEADLESS_CONFIG_SECRET} > ${HEADLESS_CONFIG_FILE}
+    /usr/games/steamcmd +login %%{STEAM_USER} +app_update 2519830 validate +exit
+    tmux new-session -d "dotnet ${RESONITE_HEADLESS_DIR}/Resonite.dll -HeadlessConfig ${HEADLESS_CONFIG_FILE} -Logs ${RESONITE_HEADLESS_DIR}/Logs"
+- path: /home/%%{USER}/.tmux.conf
+  permissions: 0644
+  owner: %%{USER}
+  content: |
+    # cancel the key bindings for C-b
+    unbind C-b
+    # set prefix key
+    #set -g prefix C-b
+    # reduce delay of key stroke
+    set -sg escape-time 1
+    # begin index of window from 1
+    set -g base-index 1
+    # begin index of pane from 1
+    setw -g pane-base-index 1
+    # rireki
+    set-option -g history-limit 500000
+    # reload tmux config file
+    bind r source-file ~/.tmux.conf \; display "Reloaded!"
+    # set prefix key
+    set-option -g prefix C-k
+    unbind-key C-b
+    bind-key C-k send-prefix
+    # split the pane with a pipe in a vertical
+    bind v split-window -h
+    # split the pane with a pipe in a transverse
+    bind w split-window -v
+    # move between the panes in the key bindings for vim
+    bind h select-pane -L
+    bind j select-pane -D
+    bind k select-pane -U
+    bind l select-pane -R
+    bind -r C-h select-window -t :-
+    bind -r C-l select-window -t :+
+    # resize the pane in the key bindings for vim
+    bind -r H resize-pane -L 5
+    bind -r J resize-pane -D 5
+    bind -r K resize-pane -U 5
+    bind -r L resize-pane -R 5
+    # use a 256-color terminal
+    set -g default-terminal "screen-256color"
+    # set the color of the status bar
+    set -g status-fg white
+    set -g status-bg black
+    # set status bar
+    ## set the left panel
+    set -g status-left-length 40
+    set -g status-left "#[fg=green]Session: #S #[fg=yellow]#I #[fg=cyan]#P"
+    ## set the right panel
+    set -g status-right-length 100
+    set -g status-right '#[fg=cyan][%Y-%m-%d(%a) %H:%M]'
+    ## set the refresh interval (default 15 seconds)
+    set -g status-interval 60
+    ## center shifting the position of the window list
+    set -g status-justify centre
+    ## enable the visual notification
+    setw -g monitor-activity on
+    set -g visual-activity on
+    ## display the status bar at the top
+    set -g status-position top
+    # set the copy mode
+    ## use the key bindings for vi
+    setw -g mode-keys vi
+    source /usr/share/powerline/bindings/tmux/powerline.conf
+    run-shell "powerline-daemon -q"
+- path: /var/lib/resonite/setup-resonite-headless-server.bash
+  permissions: 0644
+  owner: root
+  content: |
+    #!/bin/bash
+    set -o pipefail
+    declare -r command_log="/root/command.log"
+    declare -a command_lines=(
+        'sudo apt update'
+        'sudo apt install -y software-properties-common'
+        'sudo add-apt-repository -y multiverse'
+        'sudo dpkg --add-architecture i386'
+        'sudo add-apt-repository -y ppa:dotnet/backports'
+        'sudo apt update'
+        'echo steam steam/license note "" | sudo debconf-set-selections'
+        'echo steam steam/question select "I AGREE" | sudo debconf-set-selections'
+        'sudo apt install -y lib32gcc-s1 curl libopus-dev libopus0 opus-tools libc-dev tmux dstat powerline gnupg ca-certificates vim dotnet-runtime-9.0 steamcmd'
+        'curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh'
+        'sudo bash add-google-cloud-ops-agent-repo.sh --also-install'
+        'sudo apt autoremove -y'
+        'echo steam steam/license note '' | sudo debconf-set-selections'
+        'echo steam steam/question select "I AGREE" | sudo debconf-set-selections'
+        'sudo apt install -y steamcmd'
+        'sudo -u %%{USER} /usr/games/steamcmd +login %%{STEAM_USER} %%{STEAM_PASSWORD} +app_license_request 2519830 +app_update 2519830 -beta headless -betapassword %%{HEADLESS_PASSWORD} validate +exit'
+        'export RESONITE_HEADLESS_DIR="/home/%%{USER}/.local/share/Steam/steamapps/common/Resonite/Headless"'
+        'systemctl daemon-reload'
+        'systemctl --now enable resonite-headless.service'
+        'sudo touch ~/INITIALIZED'
+    )
+    timedatectl set-timezone Asia/Tokyo
+    get_datetime="date +'%Y-%m-%d %H:%M:%S'"
+
+    number_of_erros=0
+    function err() {
+        status=$?
+        lineno=$1
+        func_name=${2:-main}
+        date_time=$(eval ${get_datetime})
+        err_str="${date_time} ERROR: ${SCRIPT}:${func_name}() returned non-zero exit status ${status} at line ${lineno}. Message: ${command_result}"
+        echo ${err_str} >> ${command_log}
+        let number_of_erros++
+        exit
+    }
+
+
+    function finally() {
+        if [ ${number_of_erros} = 0 ]; then
+            finalize_message="Succeeded."
+        else
+            finalize_message="Failure: Number of errors is ${number_of_erros}"
+        fi
+        date_time=$(eval ${get_datetime})
+        echo -e "${date_time} ${finalize_message}" >> ${command_log}
+    }
+
+
+    # Start error handling
+    trap 'err ${LINENO[0]} ${FUNCNAME[1]}' ERR
+    trap finally EXIT
+
+    # Start acquiring logs
+    date_time=$(eval ${get_datetime})
+    echo -e "${date_time} Start Scrpt" > ${command_log}
+
+    # Execute main processing
+    for command in "${!command_lines[@]}"; do
+        command_result=$(
+            eval ${command_lines[command]} 2>&1
+        )
+        date_time=$(eval ${get_datetime})
+        echo ${date_time} Executed: ${command_lines[command]} >> ${command_log}
+    done
+
+    exit 0
+
+runcmd:
+  - /bin/bash /var/lib/resonite/setup-resonite-headless-server.bash
