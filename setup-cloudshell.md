@@ -27,10 +27,10 @@ echo "eval \"\$(/home/go_yamada4649/.local/bin/mise activate bash)\"" >> ~/.bash
 exit
 ```
 
-ターミナルが閉じるので、ブラウザ右上の **ターミナルを開く** ボタンをクリックします  
-ターミナル画面が表示されたら、 **+** ボタンをクリックするとシェルが起動します
+ターミナルが閉じるので(ターミナルが閉じなかったら閉じるまで exit を打ってください)、ブラウザ右上の **ターミナルを開く** ボタンをクリックします  
+ターミナル画面が表示されたら、 **▼** ボタンをクリックしプロジェクトをクリックするとシェルが起動します
 
-バージョンを確認しましょう
+mise のバージョンを確認しましょう
 ```bash
 mise --version
 ```
@@ -54,7 +54,7 @@ mise ls fzf
 Google Compute Engine を便利に扱うコマンドを bash プロファイルに仕込みます
 
 ```bash
-mv bash_profile.txt ~/.bash_profile
+mv resonite-headless-infra/scripts/bash_profile.txt ~/.bash_profile
 ```
 
 以上で準備は終了です。
@@ -63,6 +63,5 @@ mv bash_profile.txt ~/.bash_profile
 
 Steamガードをオフにしてからヘッドレスサーバの構築手順を実施してください
 ```bash
-teachme build-resonite-headless.md
+teachme resonite-headless-infra/build-resonite-headless.md
 ```
-
