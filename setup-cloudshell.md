@@ -7,7 +7,7 @@
 
 - `mise`
 - `fzf`
-- `.bash_profile`
+- `.bashrc`
 
 ## mise と fzf をインストールする
 
@@ -51,10 +51,10 @@ mise ls fzf
 ```
 
 ## シェルの設定をする
-Google Compute Engine を便利に扱うコマンドを bash プロファイルに仕込みます
+Google Compute Engine を便利に扱うコマンドを bash 設定ファイルに仕込みます
 
 ```bash
-mv resonite-headless-infra/scripts/bash_profile.txt ~/.bash_profile
+cat resonite-headless-infra/scripts/bashrc.txt >> ~/.bashrc
 ```
 
 以上で準備は終了です。
