@@ -11,11 +11,11 @@ def generate_config():
         personal_info = json.load(f)
 
     # 環境変数からUSERを取得し、辞書に追加
-    user = os.environ.get('USER') or os.environ.get('USERNAME')
+    user = os.environ.get('USER')
     if user:
         personal_info['USER'] = user
     else:
-        raise EnvironmentError('Neither USER nor USERNAME environment variable is set')
+        raise EnvironmentError('Neither USER environment variable is set')
 
     # テンプレートファイルの読み込み
     with open('setup-config.yaml.template', 'r', encoding='utf-8') as f:
@@ -29,8 +29,12 @@ def generate_config():
         raise KeyError(f'Template variable {e} not found in personal information or environment variables')
 
     # 設定ファイルの生成
-    with open('setup-config.yaml', 'w', encoding='utf-8') as f:
-        f.write(config_content)
+    try:
+        with open('setup-config.yaml', 'w', encoding='utf-8') as f:
+            f.write(config_content)
+    except Exception as e:
+        print(f"エラーになりました: {e}")
+
 
 if __name__ == '__main__':
     generate_config()
