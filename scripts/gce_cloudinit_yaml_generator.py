@@ -32,6 +32,7 @@ def generate_config():
     try:
         with open('setup-config.yaml', 'w', encoding='utf-8') as f:
             f.write(config_content)
+        print(f"setup-config.yaml を生成しました")
     except Exception as e:
         print(f"エラーになりました: {e}")
 
