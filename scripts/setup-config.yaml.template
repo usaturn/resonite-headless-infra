@@ -21,6 +21,8 @@ write_files:
     # Restart=always
     WorkingDirectory=/home/%%{USER}
     ExecStart=/bin/bash /var/lib/resonite/start-resonite-headless.bash
+    ExecStop=/usr/bin/tmux kill-server
+    ExecStop=/usr/bin/rm -rf /home/%%{USER}/.local/share/Steam/steamapps/common/Resonite/Headless/Cache/Cache/
     User=%%{USER}
     Group=%%{USER}
 

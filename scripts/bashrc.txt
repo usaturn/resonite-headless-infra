@@ -31,3 +31,5 @@ function gce-ssh(){
 }
 
 alias gce-list='gcloud compute instances list --format="table(name, resourcePolicies[0].basename(), zone, machineType, scheduling.preemptible, networkInterfaces[].accessConfigs[natIP], status)"'
+alias reso='source ~/resonite-headless-infra/scripts/env-headless-server.bash'
+

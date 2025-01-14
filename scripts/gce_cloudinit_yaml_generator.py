@@ -3,7 +3,7 @@ import os
 from string import Template
 
 class CustomTemplate(Template):
-    delimiter = '%%'  # '$' から '%%' に変更
+    delimiter = '%%'
 
 def generate_config():
     # 個人情報の読み込み
@@ -39,3 +39,4 @@ def generate_config():
 
 if __name__ == '__main__':
     generate_config()
+

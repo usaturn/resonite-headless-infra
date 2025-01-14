@@ -14,3 +14,8 @@ export IMAGE_FAMILY="ubuntu-minimal-2404-lts-amd64"
 export MACHINE_TYPE="t2d-standard-2"
 export SETUP_RESONITE_HEADLESS_SERVER_SCRIPT="setup-config.yaml"
 export MACHINE_IMAGE_NAME=resonite-headless
+PROJECT_ID=$(gcloud projects list --format="value(projectId)"|fzf)
+export CLOUDSDK_CORE_PROJECT=${PROJECT_ID}
+export CLOUDSDK_COMPUTE_ZONE=${ZONE}
+export CLOUDSDK_COMPUTE_REGION=${REGION}
+
